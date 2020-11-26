@@ -16,8 +16,11 @@ const refreshAds = async () => {
 
 app.get("/", (req, res) => {
   const fetchAndSend = async () => {
-    await refreshAds();
-    res.send(JSON.stringify(ads));
+    res.type("application/json");
+    if (!isRefreshingAds) {
+      await refreshAds();
+      res.send(JSON.stringify({ ads, status: "fresh" }));
+    } else res.send(JSON.stringify({ ads, status: "refreshing" }));
   };
 
   fetchAndSend();
