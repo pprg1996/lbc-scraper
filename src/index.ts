@@ -1,26 +1,35 @@
-import { fetchCompraVentaAds } from "./scrape";
-import express, { json } from "express";
+import { fetchCompraVentaAds, Ad } from "./scrape";
+import express from "express";
+import cors from "cors";
+
 const app = express();
 const port = 9898;
 
-let ads = {};
+app.use(cors());
+
+let ads: {
+  ventaAds: Ad[];
+  compraAds: Ad[];
+} = { compraAds: [], ventaAds: [] };
+
 let isRefreshingAds = false;
 const tiempoActualizacion = 60000;
 let isScrapingCoolingDown = false;
 
 const refreshAds = async () => {
   isRefreshingAds = true;
-  ads = await fetchCompraVentaAds();
+  const ads = await fetchCompraVentaAds();
   isRefreshingAds = false;
+
+  return ads;
 };
+
+refreshAds().then(result => (ads = result));
 
 app.get("/", (req, res) => {
   const fetchAndSend = async () => {
     res.type("application/json");
-    if (!isRefreshingAds) {
-      await refreshAds();
-      res.send(JSON.stringify({ ads, status: "fresh" }));
-    } else res.send(JSON.stringify({ ads, status: "refreshing" }));
+    res.send(JSON.stringify(ads));
   };
 
   fetchAndSend();
